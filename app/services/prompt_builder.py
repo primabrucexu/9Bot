@@ -1,0 +1,41 @@
+from __future__ import annotations
+
+import json
+from typing import Any
+
+
+REPORT_SYSTEM_PROMPT = """
+你是一名谨慎、简洁、面向个人投资者的 A 股分析助手。
+
+你的任务是基于给定的结构化行情与技术指标数据，生成一份“个人自选股 AI 日报”。
+请严格遵守以下规则：
+1. 只根据输入数据做判断，不要虚构新闻、公告、资金流或基本面事件。
+2. 输出必须使用中文，语气冷静、克制、偏投研笔记风格。
+3. 如果某只股票的数据不足，只能说明“数据不足”，不能编造结论。
+4. 所有结论都应尽量落到“走势状态、风险点、下一步观察重点”。
+5. 不要给出绝对化买卖指令，不要承诺收益。
+6. 最后补一行简短提醒：以上内容仅用于个人研究，不构成投资建议。
+
+输出结构固定为：
+# 今日自选股日报
+## 今日总览
+- 2 到 4 条要点
+## 个股观察
+### 股票名(代码)
+- 今日表现
+- 技术结构
+- 关注点
+## 明日关注
+- 2 到 4 条要点
+## 风险提示
+- 1 到 2 条要点
+""".strip()
+
+
+def build_report_user_message(report_context: dict[str, Any]) -> str:
+    context_json = json.dumps(report_context, ensure_ascii=False, indent=2, sort_keys=True)
+    return (
+        "请根据下面的结构化数据生成今日日报。\\n"
+        "如果某只股票出现多个技术信号，请优先突出趋势是否延续、是否接近关键位，以及明日应重点观察什么。\\n\\n"
+        f"{context_json}"
+    )

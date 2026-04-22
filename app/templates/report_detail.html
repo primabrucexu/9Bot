@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}AI 日报{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div>
+        <p class="eyebrow">AI 日报</p>
+        <h1>{% if report %}{{ report.report_date }} 自选股日报{% else %}还没有日报{% endif %}</h1>
+        <p class="subtle">日报基于本地缓存的行情和技术指标生成。</p>
+    </div>
+    <a class="text-link" href="/">返回看板</a>
+</section>
+
+<section class="panel">
+    {% if report %}
+        <p class="muted">模型：{{ report.model_name }}</p>
+        <pre class="report-body">{{ report.report_markdown }}</pre>
+    {% else %}
+        <div class="empty-state compact-empty-state">
+            <p>当前还没有可展示的日报。先回到看板页刷新行情并生成一份日报。</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

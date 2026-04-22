@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ stock.name }} {{ stock.symbol }}{% endblock %}
+
+{% block content %}
+<section class="page-header detail-header">
+    <div>
+        <p class="eyebrow">个股详情</p>
+        <h1>{{ stock.name }} <span class="muted">{{ stock.symbol }}</span></h1>
+        <p class="subtle">日线、均线、MACD、RSI 与规则型结论。</p>
+    </div>
+    <a class="text-link" href="/">返回看板</a>
+</section>
+
+{% if summary %}
+    <section class="metric-grid">
+        <article class="metric-card">
+            <span>最新收盘</span>
+            <strong>{{ "%.2f"|format(summary.close) }}</strong>
+        </article>
+        <article class="metric-card">
+            <span>涨跌幅</span>
+            <strong class="{% if summary.daily_change_pct and summary.daily_change_pct > 0 %}positive{% elif summary.daily_change_pct and summary.daily_change_pct < 0 %}negative{% endif %}">
+                {{ ("%.2f%%"|format(summary.daily_change_pct)) if summary.daily_change_pct is not none else "--" }}
+            </strong>
+        </article>
+        <article class="metric-card">
+            <span>MA20 位置</span>
+            <strong>{{ "上方" if summary.is_above_ma20 else "下方" }}</strong>
+        </article>
+        <article class="metric-card">
+            <span>RSI</span>
+            <strong>{{ ("%.2f"|format(summary.rsi14)) if summary.rsi14 is not none else "--" }} / {{ summary.rsi_state }}</strong>
+        </article>
+        <article class="metric-card">
+            <span>最近交易日</span>
+            <strong>{{ summary.trade_date }}</strong>
+        </article>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>规则型结论</h2>
+        </div>
+        <div class="signal-list">
+            {% for signal in summary.signals %}
+                <span class="badge badge-soft">{{ signal }}</span>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <h2>K 线与成交量</h2>
+        </div>
+        <div id="price-chart" class="chart large-chart"></div>
+    </section>
+
+    <section class="chart-columns">
+        <section class="panel">
+            <div class="panel-header">
+                <h2>MACD</h2>
+            </div>
+            <div id="macd-chart" class="chart small-chart"></div>
+        </section>
+        <section class="panel">
+            <div class="panel-header">
+                <h2>RSI(14)</h2>
+            </div>
+            <div id="rsi-chart" class="chart small-chart"></div>
+        </section>
+    </section>
+
+    <script>
+        window.stockDetailConfig = {
+            chartUrl: "{{ request.url_for('get_stock_chart', symbol=stock.symbol) }}",
+            symbol: "{{ stock.symbol }}",
+            name: "{{ stock.name }}"
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script src="{{ request.url_for('static', path='stock_detail.js') }}" defer></script>
+{% else %}
+    <section class="panel empty-state">
+        <h2>还没有行情数据</h2>
+        <p>先回到看板页刷新一次行情，再来看这只股票的 K 线与指标。</p>
+    </section>
+{% endif %}
+{% endblock %}
