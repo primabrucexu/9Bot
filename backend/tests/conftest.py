@@ -24,6 +24,7 @@ def settings_factory(tmp_path):
             anthropic_model="claude-opus-4-6",
             report_max_tokens=16000,
             history_days=365,
+            log_level="INFO",
         )
 
     return _factory

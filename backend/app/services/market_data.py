@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
+import logging
 import re
 from typing import Any
 
@@ -10,6 +11,9 @@ import pandas as pd
 from app import db
 from app.config import Settings
 from app.services import indicators
+
+
+logger = logging.getLogger(__name__)
 
 
 class MarketDataError(Exception):
@@ -43,8 +47,15 @@ def normalize_symbol(symbol: str) -> str:
 
 def add_watchlist_symbol(settings: Settings, symbol: str) -> dict[str, Any]:
     normalized = normalize_symbol(symbol)
+    logger.info("Looking up symbol=%s before watchlist add database_path=%s", normalized, settings.database_path)
     quote = lookup_symbol(normalized)
     db.add_watchlist_item(settings.database_path, normalized, quote["name"])
+    logger.info(
+        "Watchlist add stored symbol=%s name=%s database_path=%s",
+        normalized,
+        quote["name"],
+        settings.database_path,
+    )
     return quote
 
 
@@ -61,11 +72,17 @@ def refresh_watchlist(settings: Settings) -> list[dict[str, Any]]:
     if not watchlist:
         raise MarketDataError("请先添加至少一只自选股，再刷新行情。")
 
+    logger.info(
+        "Refreshing watchlist database_path=%s watchlist_count=%s",
+        settings.database_path,
+        len(watchlist),
+    )
     snapshot_table = _fetch_snapshot_table()
     refreshed: list[dict[str, Any]] = []
 
     for item in watchlist:
         symbol = item["symbol"]
+        logger.info("Refreshing symbol=%s database_path=%s", symbol, settings.database_path)
         matching = snapshot_table.loc[snapshot_table["symbol"] == symbol]
         if matching.empty:
             raise MarketDataError(f"未找到股票代码 {symbol} 的实时行情。")
@@ -79,6 +96,13 @@ def refresh_watchlist(settings: Settings) -> list[dict[str, Any]]:
             "name": snapshot["name"],
             "bars": len(history),
         })
+        logger.info(
+            "Refreshed symbol=%s name=%s bars=%s database_path=%s",
+            symbol,
+            snapshot["name"],
+            len(history),
+            settings.database_path,
+        )
 
     return refreshed
 
@@ -106,11 +130,14 @@ def build_dashboard_rows(settings: Settings) -> list[dict[str, Any]]:
 
 
 def lookup_symbol(symbol: str) -> dict[str, Any]:
+    logger.info("Looking up market snapshot symbol=%s", symbol)
     snapshot_table = _fetch_snapshot_table()
     matching = snapshot_table.loc[snapshot_table["symbol"] == symbol]
     if matching.empty:
+        logger.warning("Market snapshot missing symbol=%s", symbol)
         raise MarketDataError(f"未找到股票代码 {symbol}，请确认它是有效的 A 股代码。")
     row = matching.iloc[0]
+    logger.info("Market snapshot resolved symbol=%s name=%s", row["symbol"], row["name"])
     return {
         "symbol": row["symbol"],
         "name": row["name"],
