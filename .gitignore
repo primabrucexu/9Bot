@@ -13,6 +13,8 @@ frontend/*.log
 frontend/node_modules/
 frontend/dist/
 frontend/dist-ssr/
+frontend/playwright-report/
+frontend/test-results/
 frontend/*.local
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +24,7 @@ frontend/*.local
 *.njsproj
 *.sln
 *.sw?
+.claude/settings.local.json
+.claude/settings.json
+.claude/worktrees/
+.playwright-mcp/

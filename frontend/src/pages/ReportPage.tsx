@@ -45,7 +45,7 @@ function ReportPage({ mode }: ReportPageProps) {
     }
   }, [mode, reportDate])
 
-  const title = report ? `${report.report_date} 自选股日报` : '还没有日报'
+  const title = report ? `${report.report_date} 市场观察日报` : '还没有日报'
 
   return (
     <>
@@ -53,10 +53,10 @@ function ReportPage({ mode }: ReportPageProps) {
         <div>
           <p className="eyebrow">AI 日报</p>
           <h1>{title}</h1>
-          <p className="subtle">日报基于本地缓存的行情和技术指标生成。</p>
+          <p className="subtle">日报基于本地缓存的日线数据和技术指标生成。</p>
         </div>
         <Link className="text-link" to="/">
-          返回看板
+          返回股票页
         </Link>
       </section>
 

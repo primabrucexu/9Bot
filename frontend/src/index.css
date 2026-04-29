@@ -371,6 +371,78 @@ th {
   margin-top: 1.5rem;
 }
 
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.stock-sidebar {
+  position: sticky;
+  top: 1.5rem;
+}
+
+.sidebar-actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.stock-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.stock-list-item {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.95rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.stock-list-item:hover {
+  text-decoration: none;
+  border-color: #93c5fd;
+  background: #f8fbff;
+  transform: translateY(-1px);
+}
+
+.stock-list-item.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.stock-list-head,
+.stock-list-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.stock-list-head strong {
+  font-size: 1rem;
+}
+
+.compact-signal-list {
+  gap: 0.35rem;
+}
+
+.compact-signal-list .badge {
+  font-size: 0.8rem;
+}
+
+.detail-main {
+  min-width: 0;
+}
+
 .chart-error {
   display: grid;
   place-items: center;
@@ -392,12 +464,75 @@ th {
   color: var(--negative);
 }
 
+.jygs-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.jygs-meta-list {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.jygs-meta-list strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.jygs-meta-list p {
+  margin: 0;
+  word-break: break-word;
+  color: var(--muted);
+}
+
+.helper-list {
+  margin: 1rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.55rem;
+}
+
+.diagram-preview {
+  display: grid;
+  gap: 1rem;
+}
+
+.diagram-image {
+  display: block;
+  width: 100%;
+  max-height: 960px;
+  object-fit: contain;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 0.75rem;
+}
+
+@media (max-width: 1100px) {
+  .jygs-layout {
+    grid-template-columns: 1fr;
+  }
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-sidebar {
+    position: static;
+  }
+}
+
 @media (max-width: 900px) {
   .content-grid,
   .chart-columns,
   .controls-grid,
   .site-header .site-shell,
-  .page-header {
+  .page-header,
+  .stock-list-head,
+  .stock-list-meta {
     grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;

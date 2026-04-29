@@ -1,34 +1,56 @@
-export type DashboardRow = {
+export type BaseStockPoolRow = {
   symbol: string
   name: string
-  latest_close: number | null
+}
+
+export type BaseStockPoolResponse = {
+  rows: BaseStockPoolRow[]
+  total: number
+  offset: number
+  limit: number
+}
+
+export type HotSector = {
+  name: string
+  count: number
+  rank: number
+}
+
+export type LimitUpCopyRow = {
+  symbol: string
+  name: string
+  sector: string
+  score: number
+  trade_date: string
+  last_close: number
+  last_limit_up_date: string
+  limit_up_count_7d: number
+  max_board_count: number
   daily_change_pct: number | null
   ma_status: string
   macd_bias: string
   rsi_state: string
-  last_trade_date: string | null
   signals: string[]
-  has_data: boolean
 }
 
-export type ReportPreview = {
-  report_date: string
-  preview_markdown: string
-  model_name: string
-  created_at: string
-}
-
-export type DashboardResponse = {
-  rows: DashboardRow[]
-  latest_report: ReportPreview | null
+export type LimitUpCopyResponse = {
+  trade_date: string
+  rows: LimitUpCopyRow[]
+  total: number
+  limit: number
+  hot_sectors: HotSector[]
 }
 
 export type Stock = {
   symbol: string
   name: string
-  note: string | null
-  sort_order: number
-  created_at: string
+  market?: string | null
+  board?: string | null
+  is_st?: boolean | null
+  is_active?: boolean | null
+  note?: string | null
+  sort_order?: number | null
+  created_at?: string | null
 }
 
 export type StockSummary = {
@@ -54,6 +76,16 @@ export type StockDetailResponse = {
   has_data: boolean
 }
 
+export type MarketOverviewIndex = {
+  symbol: string
+  name: string
+  summary: StockSummary
+}
+
+export type MarketOverviewResponse = {
+  indices: MarketOverviewIndex[]
+}
+
 export type ChartPayload = {
   dates: string[]
   candles: Array<Array<number | null>>
@@ -75,18 +107,61 @@ export type ReportResponse = {
   created_at: string
 }
 
-export type WatchlistMutationResponse = {
+export type MarketUniverseRefreshResponse = {
   ok: boolean
-  symbol?: string
-  name?: string
+  scope: string
+  count: number
 }
 
-export type RefreshWatchlistResponse = {
+export type MarketDataSyncRequest = {
+  history_days?: number
+  refresh_universe?: boolean
+}
+
+export type MarketDataSyncResponse = {
   ok: boolean
-  count: number
+  scope: string
+  history_days: number
+  universe_count: number
+  synced_count: number
+  last_trade_date: string | null
 }
 
 export type ReportGenerationResponse = {
   ok: boolean
   report_date: string
+}
+
+export type JygsLoginFlow = {
+  status: string
+  message: string | null
+  login_url: string | null
+  updated_at: string | null
+}
+
+export type JygsDiagramEntry = {
+  date: string
+  status: string
+  image_url: string
+  source_image_url: string | null
+  updated_at: string | null
+}
+
+export type JygsStatusResponse = {
+  login_ready: boolean
+  storage_state_path: string
+  login_flow: JygsLoginFlow
+  latest: JygsDiagramEntry | null
+}
+
+export type JygsLoginActionResponse = {
+  ok: boolean
+  status: JygsStatusResponse
+}
+
+export type JygsFetchResponse = {
+  ok: boolean
+  requested_dates: string[]
+  skipped: string[]
+  status: JygsStatusResponse
 }

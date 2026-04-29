@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:edge-smoke": "playwright test --project=edge-smoke",
+    "test:edge-smoke:headed": "playwright test --project=edge-smoke --headed",
+    "jygs:login": "node ./scripts/jygs-login.mjs",
+    "jygs:fetch": "node ./scripts/jygs-fetch.mjs"
   },
   "dependencies": {
     "echarts": "^6.0.0",
@@ -17,6 +21,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.59.1",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

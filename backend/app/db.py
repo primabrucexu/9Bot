@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 import sqlite3
-from typing import Any
+from typing import Any, Iterable
 
 import pandas as pd
 
@@ -15,6 +15,16 @@ CREATE TABLE IF NOT EXISTS watchlist (
     note TEXT,
     sort_order INTEGER NOT NULL,
     created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stock_universe (
+    symbol TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    market TEXT NOT NULL,
+    board TEXT NOT NULL,
+    is_st INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS daily_bars (
@@ -29,6 +39,14 @@ CREATE TABLE IF NOT EXISTS daily_bars (
     PRIMARY KEY (symbol, trade_date)
 );
 
+CREATE TABLE IF NOT EXISTS market_sync_state (
+    scope TEXT PRIMARY KEY,
+    status TEXT NOT NULL,
+    last_trade_date TEXT,
+    last_run_at TEXT NOT NULL,
+    error TEXT
+);
+
 CREATE TABLE IF NOT EXISTS daily_reports (
     report_date TEXT PRIMARY KEY,
     report_markdown TEXT NOT NULL,
@@ -36,6 +54,10 @@ CREATE TABLE IF NOT EXISTS daily_reports (
     model_name TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_daily_bars_trade_date ON daily_bars(trade_date);
+CREATE INDEX IF NOT EXISTS idx_daily_bars_trade_date_symbol ON daily_bars(trade_date, symbol);
+CREATE INDEX IF NOT EXISTS idx_stock_universe_active_symbol ON stock_universe(is_active, symbol);
 """
 
 
@@ -109,6 +131,134 @@ def update_watchlist_name(database_path: Path, symbol: str, name: str) -> None:
 def delete_watchlist_item(database_path: Path, symbol: str) -> None:
     with _connect(database_path) as connection:
         connection.execute("DELETE FROM watchlist WHERE symbol = ?", (symbol,))
+
+
+def upsert_stock_universe(database_path: Path, stocks: Iterable[dict[str, Any]]) -> int:
+    timestamp = datetime.now(UTC).isoformat(timespec="seconds")
+    records = []
+    for stock in stocks:
+        records.append(
+            (
+                str(stock["symbol"]),
+                str(stock["name"]),
+                str(stock["market"]),
+                str(stock["board"]),
+                int(bool(stock.get("is_st", False))),
+                int(bool(stock.get("is_active", True))),
+                timestamp,
+            )
+        )
+
+    if not records:
+        return 0
+
+    with _connect(database_path) as connection:
+        connection.executemany(
+            """
+            INSERT INTO stock_universe(symbol, name, market, board, is_st, is_active, updated_at)
+            VALUES(?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(symbol) DO UPDATE SET
+                name = excluded.name,
+                market = excluded.market,
+                board = excluded.board,
+                is_st = excluded.is_st,
+                is_active = excluded.is_active,
+                updated_at = excluded.updated_at
+            """,
+            records,
+        )
+    return len(records)
+
+
+def list_stock_universe(
+    database_path: Path,
+    *,
+    limit: int | None = None,
+    offset: int = 0,
+    active_only: bool = True,
+) -> list[dict[str, Any]]:
+    query = (
+        "SELECT symbol, name, market, board, is_st, is_active, updated_at FROM stock_universe"
+    )
+    params: list[Any] = []
+    clauses: list[str] = []
+
+    if active_only:
+        clauses.append("is_active = 1")
+
+    if clauses:
+        query += " WHERE " + " AND ".join(clauses)
+
+    query += " ORDER BY symbol ASC"
+    if limit is not None:
+        query += " LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+    with _connect(database_path) as connection:
+        rows = connection.execute(query, params).fetchall()
+    return [_coerce_stock_universe_row(dict(row)) for row in rows]
+
+
+def get_stock_universe_item(database_path: Path, symbol: str) -> dict[str, Any] | None:
+    with _connect(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT symbol, name, market, board, is_st, is_active, updated_at
+            FROM stock_universe
+            WHERE symbol = ?
+            """,
+            (symbol,),
+        ).fetchone()
+    return _coerce_stock_universe_row(dict(row)) if row else None
+
+
+def replace_market_sync_state(
+    database_path: Path,
+    scope: str,
+    *,
+    status: str,
+    last_trade_date: str | None = None,
+    error: str | None = None,
+) -> None:
+    timestamp = datetime.now(UTC).isoformat(timespec="seconds")
+    with _connect(database_path) as connection:
+        connection.execute(
+            """
+            INSERT INTO market_sync_state(scope, status, last_trade_date, last_run_at, error)
+            VALUES(?, ?, ?, ?, ?)
+            ON CONFLICT(scope) DO UPDATE SET
+                status = excluded.status,
+                last_trade_date = excluded.last_trade_date,
+                last_run_at = excluded.last_run_at,
+                error = excluded.error
+            """,
+            (scope, status, last_trade_date, timestamp, error),
+        )
+
+
+def get_market_sync_state(database_path: Path, scope: str) -> dict[str, Any] | None:
+    with _connect(database_path) as connection:
+        row = connection.execute(
+            """
+            SELECT scope, status, last_trade_date, last_run_at, error
+            FROM market_sync_state
+            WHERE scope = ?
+            """,
+            (scope,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def list_market_sync_states(database_path: Path) -> list[dict[str, Any]]:
+    with _connect(database_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT scope, status, last_trade_date, last_run_at, error
+            FROM market_sync_state
+            ORDER BY scope ASC
+            """
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def upsert_daily_bars(database_path: Path, symbol: str, bars: pd.DataFrame) -> None:
@@ -218,3 +368,15 @@ def get_report_by_date(database_path: Path, report_date: str) -> dict[str, Any] 
             (report_date,),
         ).fetchone()
     return dict(row) if row else None
+
+
+def _coerce_stock_universe_row(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "symbol": row["symbol"],
+        "name": row["name"],
+        "market": row["market"],
+        "board": row["board"],
+        "is_st": bool(row["is_st"]),
+        "is_active": bool(row["is_active"]),
+        "updated_at": row["updated_at"],
+    }

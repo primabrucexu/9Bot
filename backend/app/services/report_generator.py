@@ -72,12 +72,12 @@ def generate_daily_report(settings: Settings) -> dict[str, Any]:
 
 
 def build_report_context(settings: Settings) -> dict[str, Any]:
-    watchlist = db.list_watchlist(settings.database_path)
-    if not watchlist:
-        raise ReportGenerationError("请先添加自选股并刷新行情，再生成日报。")
+    universe = db.list_stock_universe(settings.database_path, active_only=True)
+    if not universe:
+        raise ReportGenerationError("请先刷新全市场股票清单并同步行情，再生成日报。")
 
     stocks: list[dict[str, Any]] = []
-    for item in watchlist:
+    for item in universe:
         bars = db.get_daily_bars(settings.database_path, item["symbol"], limit=180)
         if bars.empty:
             continue
@@ -87,6 +87,8 @@ def build_report_context(settings: Settings) -> dict[str, Any]:
             {
                 "symbol": item["symbol"],
                 "name": item["name"],
+                "market": item["market"],
+                "board": item["board"],
                 "trade_date": latest["trade_date"],
                 "close": latest["close"],
                 "daily_change_pct": latest["daily_change_pct"],
@@ -103,26 +105,50 @@ def build_report_context(settings: Settings) -> dict[str, Any]:
         )
 
     if not stocks:
-        raise ReportGenerationError("当前自选股还没有可用行情，请先刷新行情。")
+        raise ReportGenerationError("当前市场数据还没有可用行情，请先同步日线数据。")
 
     report_date = max(stock["trade_date"] for stock in stocks)
-    ordered = sorted(stocks, key=lambda item: item["daily_change_pct"] or 0, reverse=True)
-    rising = sum(1 for stock in stocks if (stock["daily_change_pct"] or 0) > 0)
-    falling = sum(1 for stock in stocks if (stock["daily_change_pct"] or 0) < 0)
-    flat = len(stocks) - rising - falling
-    avg_change = round(sum((stock["daily_change_pct"] or 0) for stock in stocks) / len(stocks), 2)
+    report_stocks = [stock for stock in stocks if stock["trade_date"] == report_date]
+    ordered = sorted(report_stocks, key=lambda item: item["daily_change_pct"] or 0, reverse=True)
+    rising = sum(1 for stock in report_stocks if (stock["daily_change_pct"] or 0) > 0)
+    falling = sum(1 for stock in report_stocks if (stock["daily_change_pct"] or 0) < 0)
+    flat = len(report_stocks) - rising - falling
+    avg_change = round(sum((stock["daily_change_pct"] or 0) for stock in report_stocks) / len(report_stocks), 2)
+    strong_trend = [
+        stock for stock in ordered if stock["is_above_ma20"] and stock["macd_bias"] == "多头"
+    ]
+    weak_trend = [
+        stock for stock in sorted(ordered, key=lambda item: item["daily_change_pct"] or 0)
+        if not stock["is_above_ma20"] and stock["macd_bias"] == "空头"
+    ]
 
     return {
         "report_date": report_date,
-        "watchlist_count": len(stocks),
+        "scope": "full-a-share",
+        "stock_count": len(report_stocks),
         "rising_count": rising,
         "falling_count": falling,
         "flat_count": flat,
         "average_change_pct": avg_change,
-        "top_gainers": _compact_stocks(ordered[:3]),
-        "top_losers": _compact_stocks(list(reversed(ordered[-3:]))),
-        "stocks": stocks,
+        "market_breakdown": _build_market_distribution(report_stocks, "market"),
+        "board_breakdown": _build_market_distribution(report_stocks, "board"),
+        "top_gainers": _compact_stocks(ordered[:5]),
+        "top_losers": _compact_stocks(sorted(ordered, key=lambda item: item["daily_change_pct"] or 0)[:5]),
+        "strong_trend": _compact_stocks(strong_trend[:5]),
+        "weak_trend": _compact_stocks(weak_trend[:5]),
     }
+
+
+def _build_market_distribution(stocks: list[dict[str, Any]], field: str) -> list[dict[str, Any]]:
+    counts: dict[str, int] = {}
+    for stock in stocks:
+        key = str(stock[field])
+        counts[key] = counts.get(key, 0) + 1
+    return [
+        {"name": name, "count": count}
+        for name, count in sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+
 
 
 def _compact_stocks(stocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -130,6 +156,8 @@ def _compact_stocks(stocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         {
             "symbol": stock["symbol"],
             "name": stock["name"],
+            "market": stock.get("market"),
+            "board": stock.get("board"),
             "daily_change_pct": stock["daily_change_pct"],
             "signals": stock["signals"][:3],
         }
