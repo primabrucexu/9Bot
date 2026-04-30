@@ -36,10 +36,11 @@
 │  │     ├─ report_generator.py  # AI 日报生成与落库
 │  │     └─ prompt_builder.py    # 日报提示词构造
 │  ├─ tests/                     # 后端测试
-│  ├─ .env.example               # 后端环境变量示例
 │  ├─ pyproject.toml             # pytest 配置
 │  ├─ requirements.txt
 │  └─ requirements-dev.txt
+├─ conf/
+│  └─ .env.example               # 环境变量示例
 ├─ frontend/
 │  ├─ src/
 │  │  ├─ api/                    # 前端 API client 和类型
@@ -48,7 +49,7 @@
 │  │  └─ main.tsx                # React 挂载入口
 │  ├─ package.json
 │  └─ vite.config.ts
-├─ data/                         # 旧的本地数据目录（如继续沿用需手动迁移）
+├─ data/                         # 本地数据库与运行时文件
 ├─ start.bat                     # Windows 全栈开发启动脚本
 ├─ start.sh                      # Linux/macOS 全栈开发启动脚本
 ├─ README.md
@@ -59,7 +60,7 @@
 
 ### 1. 配置后端环境变量
 
-复制 `backend/.env.example` 为 `backend/.env`，至少补充 Anthropic API Key：
+复制 `conf/.env.example` 为 `conf/.env`，至少补充 Anthropic API Key：
 
 ```bash
 ANTHROPIC_API_KEY=your_api_key
@@ -74,10 +75,10 @@ NINEBOT_FRONTEND_DIST=../frontend/dist
 
 说明：
 - `ANTHROPIC_API_KEY`：生成 AI 日报时必填
-- `NINEBOT_DB_PATH`：后端 SQLite 数据库路径，默认相对 `backend/`
+- `NINEBOT_DB_PATH`：后端 SQLite 数据库路径，默认相对仓库根目录
 - `NINEBOT_HISTORY_DAYS`：刷新历史行情时回看的天数
 - `NINEBOT_CORS_ORIGINS`：允许访问后端 API 的前端来源
-- `NINEBOT_FRONTEND_DIST`：如果后续要让后端托管打包产物，可指向 `../frontend/dist`
+- `NINEBOT_FRONTEND_DIST`：如果后续要让后端托管打包产物，可指向 `../frontend/dist`（这个路径仍相对 `backend/` 解析）
 
 ### 2. 启动开发环境
 
@@ -198,7 +199,7 @@ AI 日报由 `backend/app/services/report_generator.py` 负责生成，特点如
 - `daily_bars`：本地缓存的历史日线
 - `daily_reports`：生成后的日报内容与上下文
 
-默认数据库位置是 `backend/data/9bot.db`（若继续使用旧的根目录 `data/`，需手动迁移或通过环境变量覆盖）。
+默认数据库位置是 `data/9bot.db`，韭研公社登录态与抓图等运行时文件也默认保存在 `data/jygs/` 下。
 
 ## 测试
 
@@ -260,7 +261,8 @@ pytest tests/test_indicators.py
 - 生成日报前需要先配置 `ANTHROPIC_API_KEY`
 - AI 输出仅基于本地缓存的结构化数据，不会自动补充新闻、公告或基本面信息
 - 项目定位为个人研究工具，不构成投资建议
-- 如果你之前把 `.env`、`.venv`、`data/9bot.db` 放在仓库根目录，现在需要手动迁移到 `backend/` 下，或通过环境变量显式指定位置
+- `.venv` 仍位于 `backend/`；本地运行时数据和环境变量文件现在统一放在仓库根目录的 `data/` 与 `conf/` 下
+- 如果你之前还在使用 `backend/data` 或 `backend/.env`，请手动迁移到新的根目录位置
 
 ## License
 

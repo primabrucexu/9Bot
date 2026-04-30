@@ -89,7 +89,7 @@ async function removeIfExists(filePath) {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const storageStatePath = path.resolve(
-    args['storage-state'] ?? path.join(repoRoot, 'backend', 'data', 'jygs', 'auth', 'storage-state.json'),
+    args['storage-state'] ?? path.join(repoRoot, 'data', 'jygs', 'auth', 'storage-state.json'),
   )
   const loginUrl = args.url ?? `https://www.jiuyangongshe.com/action/${formatToday()}`
   const signalFilePath = args['signal-file'] ? path.resolve(args['signal-file']) : null

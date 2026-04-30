@@ -41,7 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
 ### Backend
 
 - `backend/app/main.py` is the FastAPI entrypoint. It initializes SQLite during the app lifespan, stores `settings` on `app.state`, applies CORS, and registers the JSON API router.
-- `backend/app/config.py` centralizes configuration in a cached `Settings` dataclass loaded from `backend/.env`. Defaults are documented in `backend/.env.example`. The local backend database defaults to `backend/data/9bot.db`.
+- `backend/app/config.py` centralizes configuration in a cached `Settings` dataclass loaded from `conf/.env` (with temporary fallback to `backend/.env` during migration). Defaults are documented in `conf/.env.example`. The local backend database defaults to `data/9bot.db`.
 - `backend/app/db.py` is the persistence layer. It uses raw `sqlite3` plus pandas reads/writes rather than an ORM. The app persists three concepts only: watchlist items, cached daily bars, and generated daily reports.
 
 ### Request flow and responsibilities
@@ -88,5 +88,5 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
 
 ## Restructure caveat
 
-- `.env`, `.venv`, and `data/9bot.db` may still exist at the repository root from before the backend move. They are not tracked, so they do not move automatically with code changes.
-- If local development breaks after the restructure, first check whether those files need to be recreated or moved under `backend/`.
+- `.venv` still lives under `backend/`, but runtime data and env files now belong under the repository-root `data/` and `conf/` directories.
+- If local development breaks after the restructure, first check whether untracked files still need to be moved from `backend/data` or `backend/.env` into the new root locations.

@@ -12,15 +12,15 @@ def clear_settings_cache():
     get_settings.cache_clear()
 
 
-def test_relative_paths_resolve_from_project_root(monkeypatch, tmp_path):
+def test_relative_paths_resolve_from_repo_root(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("NINEBOT_DATA_DIR", "custom-data")
     monkeypatch.setenv("NINEBOT_DB_PATH", "custom-db/9bot.db")
 
     settings = get_settings()
 
-    assert settings.data_dir == settings.project_root / "custom-data"
-    assert settings.database_path == settings.project_root / "custom-db" / "9bot.db"
+    assert settings.data_dir == settings.project_root.parent / "custom-data"
+    assert settings.database_path == settings.project_root.parent / "custom-db" / "9bot.db"
     assert settings.data_dir != tmp_path / "custom-data"
     assert settings.database_path != tmp_path / "custom-db" / "9bot.db"
 
@@ -32,8 +32,8 @@ def test_database_path_defaults_under_resolved_data_dir(monkeypatch, tmp_path):
 
     settings = get_settings()
 
-    assert settings.data_dir == settings.project_root / "custom-data"
-    assert settings.database_path == settings.project_root / "custom-data" / "9bot.db"
+    assert settings.data_dir == settings.project_root.parent / "custom-data"
+    assert settings.database_path == settings.project_root.parent / "custom-data" / "9bot.db"
 
 
 def test_log_level_defaults_to_info(monkeypatch):

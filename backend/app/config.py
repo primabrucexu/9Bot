@@ -62,13 +62,20 @@ class Settings:
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     project_root = Path(__file__).resolve().parents[1]
-    load_dotenv(project_root / ".env")
+    repo_root = project_root.parent
+    conf_env_path = repo_root / "conf" / ".env"
+    legacy_env_path = project_root / ".env"
+
+    if conf_env_path.exists():
+        load_dotenv(conf_env_path)
+    elif legacy_env_path.exists():
+        load_dotenv(legacy_env_path)
 
     data_dir_raw = os.getenv("NINEBOT_DATA_DIR")
     database_path_raw = os.getenv("NINEBOT_DB_PATH")
 
-    data_dir = _resolve_env_path(data_dir_raw or "data", project_root)
-    database_path = _resolve_env_path(database_path_raw, project_root) if database_path_raw else data_dir / "9bot.db"
+    data_dir = _resolve_env_path(data_dir_raw or "data", repo_root)
+    database_path = _resolve_env_path(database_path_raw, repo_root) if database_path_raw else data_dir / "9bot.db"
 
     return Settings(
         project_root=project_root,

@@ -6,8 +6,8 @@ import { chromium } from '@playwright/test'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..', '..')
-const DEFAULT_STORAGE_STATE = path.join(repoRoot, 'backend', 'data', 'jygs', 'auth', 'storage-state.json')
-const DEFAULT_OUTPUT_DIR = path.join(repoRoot, 'backend', 'data', 'jygs', 'diagrams')
+const DEFAULT_STORAGE_STATE = path.join(repoRoot, 'data', 'jygs', 'auth', 'storage-state.json')
+const DEFAULT_OUTPUT_DIR = path.join(repoRoot, 'data', 'jygs', 'diagrams')
 const DIAGRAM_API_URL = 'https://app.jiuyangongshe.com/jystock-app/api/v1/action/diagram-url'
 
 function parseArgs(argv) {

@@ -415,7 +415,7 @@ function createDefaultState(): MockApiState {
 
   const jygsStatus: JygsStatusResponse = {
     login_ready: false,
-    storage_state_path: 'D:/dev/9Bot/backend/data/jygs/auth/storage-state.json',
+    storage_state_path: 'D:/dev/9Bot/data/jygs/auth/storage-state.json',
     login_flow: {
       status: 'idle',
       message: null,

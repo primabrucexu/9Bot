@@ -16,7 +16,7 @@ class ReportGenerationError(Exception):
 
 def generate_daily_report(settings: Settings) -> dict[str, Any]:
     if not settings.anthropic_api_key:
-        raise ReportGenerationError("请先在 .env 中配置 ANTHROPIC_API_KEY，再生成 AI 日报。")
+        raise ReportGenerationError("请先在 conf/.env 中配置 ANTHROPIC_API_KEY，再生成 AI 日报。")
 
     report_context = build_report_context(settings)
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
@@ -43,7 +43,7 @@ def generate_daily_report(settings: Settings) -> dict[str, Any]:
         ) as stream:
             response = stream.get_final_message()
     except anthropic.AuthenticationError as exc:
-        raise ReportGenerationError("Anthropic API Key 无效，请检查 .env 配置。") from exc
+        raise ReportGenerationError("Anthropic API Key 无效，请检查 conf/.env 配置。") from exc
     except anthropic.PermissionDeniedError as exc:
         raise ReportGenerationError("当前 Anthropic API Key 没有足够权限生成日报。") from exc
     except anthropic.RateLimitError as exc:

@@ -141,7 +141,7 @@ test('韭研公社抓图失败时仅影响当前页面面板', async ({ page }) 
   await registerMockApi(page, {
     jygsStatus: {
       login_ready: true,
-      storage_state_path: 'D:/dev/9Bot/backend/data/jygs/auth/storage-state.json',
+      storage_state_path: 'D:/dev/9Bot/data/jygs/auth/storage-state.json',
       login_flow: {
         status: 'saved',
         message: '登录态已保存。',
